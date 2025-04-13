@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.7.570/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.2/xlsx.min.js"></script>
+    <title>Grader: Academic Dasboard</title>
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <a href="index.html" class="logo">
+            <i class='bx bx-code-alt'></i>
+            <div class="logo-name"><span>Gra</span>Der</div>
+        </a>
+        <ul class="side-menu">
+            <li><a href="index.html"><i class='bx bxs-dashboard'></i>Dashboard</a></li>
+            <li><a href="notices.html"><i class='bx bx-store-alt'></i>Notices</a></li>
+            <li class="active"><a href="result.html"><i class='bx bx-message-square-dots'></i>Result</a></li>
+            <li><a href="attendence.html"><i class='bx bx-analyse'></i>Attendence</a></li>
+            <li><a href="admitcard.html"><i class='bx bx-group'></i>Admit Card</a></li>
+            <li><a href="settings.html"><i class='bx bx-cog'></i>Settings</a></li>
+        </ul>
+        <ul class="side-menu">
+            <li>
+                <a href="logout.html" class="logout">
+                    <i class='bx bx-log-out-circle'></i>
+                    Logout
+                </a>
+            </li>
+        </ul>
+    </div>
+    <!-- End of Sidebar -->
+
+    <!-- Main Content -->
+    <div class="content">
+        <!-- Navbar -->
+        <nav>
+            <i class='bx bx-menu'></i>
+            <form action="#">
+                <div class="form-input">
+                    <input type="search" placeholder="Search...">
+                    <button class="search-btn" type="submit"><i class='bx bx-search'></i></button>
+                </div>
+            </form>
+            <input type="checkbox" id="theme-toggle" hidden>
+            <label for="theme-toggle" class="theme-toggle"></label>
+            <a href="#" class="notif">
+                <i class='bx bx-bell'></i>
+                <span class="count">10</span>
+            </a>
+            <a href="#" class="profile">
+                <img src="images/profile-1.jpg">
+            </a>
+        </nav>
+
+        <!-- End of Navbar -->
+
+        <main>
+            <div class="header">
+                <div class="left">
+                    <h1>Result</h1>
+                    <ul class="breadcrumb">
+                        <li><a href="#">
+                                University
+                            </a></li>
+                        /
+                        <li><a href="#" class="active">Class-Test</a></li>
+                    </ul>
+                </div>
+                <a href="https://www.ilovepdf.com/pdf_to_excel" class="report">
+                    <i class='bx bx-cloud-download'></i>
+                    <span>Download Result</span>
+                </a>
+            </div>
+
+            <div class="converter">
+                <br>
+                <br>
+                <center><u><h1>PDF to Excel Converter</h1></u></center>
+    <form id="form">
+        <br>
+        <br>
+        <label for="file">Select a PDF file:</label>
+        <input type="file" id="file" name="file" accept=".pdf" required>
+        <button type="submit">Convert to Excel</button>
+    </form>
+    <a id="download" href="#" download="converted.xlsx" style="display: none;">Download Converted Excel File</a>
+
+    <script>
+        const form = document.getElementById('form');
+        const fileInput = document.getElementById('file');
+        const downloadLink = document.getElementById('download');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const file = fileInput.files[0];
+            const fileReader = new FileReader();
+
+            fileReader.onload = async () => {
+                const pdfData = new Uint8Array(fileReader.result);
+                const pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                const excelData = [];
+
+                for (let i = 1; i <= pdfDoc.numPages; i++) {
+                    const pdfPage = await pdfDoc.getPage(i);
+                    const textContent = await pdfPage.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    excelData.push([pageText]);
+                }
+
+                const workbook = XLSX.utils.book_new();
+                const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+                const excelDataBytes = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' });
+                const buffer = new ArrayBuffer(excelDataBytes.length);
+                const view = new Uint8Array(buffer);
+
+                for (let i = 0; i < excelDataBytes.length; i++) {
+                    view[i] = excelDataBytes.charCodeAt(i) & 0xFF;
+                }
+
+                downloadLink.href = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }));
+                downloadLink.click();
+            };
+
+            fileReader.readAsArrayBuffer(file);
+        });
+    </script>
+            </div>
+            
+        </main>
+
+    </div>
+
+    <script src="index.js"></script>
+</body>
+
+</html>

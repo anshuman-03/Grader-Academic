@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF to Excel Converter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.7.570/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.2/xlsx.min.js"></script>
+</head>
+<body>
+    <h1>PDF to Excel Converter</h1>
+    <form id="form">
+        <label for="file">Select a PDF file:</label>
+        <input type="file" id="file" name="file" accept=".pdf" required>
+        <button type="submit">Convert to Excel</button>
+    </form>
+    <a id="download" href="#" download="converted.xlsx" style="display: none;">Download Converted Excel File</a>
+
+    <script>
+        const form = document.getElementById('form');
+        const fileInput = document.getElementById('file');
+        const downloadLink = document.getElementById('download');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const file = fileInput.files[0];
+            const fileReader = new FileReader();
+
+            fileReader.onload = async () => {
+                const pdfData = new Uint8Array(fileReader.result);
+                const pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                const excelData = [];
+
+                for (let i = 1; i <= pdfDoc.numPages; i++) {
+                    const pdfPage = await pdfDoc.getPage(i);
+                    const textContent = await pdfPage.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    excelData.push([pageText]);
+                }
+
+                const workbook = XLSX.utils.book_new();
+                const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+                const excelDataBytes = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' });
+                const buffer = new ArrayBuffer(excelDataBytes.length);
+                const view = new Uint8Array(buffer);
+
+                for (let i = 0; i < excelDataBytes.length; i++) {
+                    view[i] = excelDataBytes.charCodeAt(i) & 0xFF;
+                }
+
+                downloadLink.href = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }));
+                downloadLink.click();
+            };
+
+            fileReader.readAsArrayBuffer(file);
+        });
+    </script>
+</body>
+</html>
